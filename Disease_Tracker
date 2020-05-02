@@ -1,0 +1,68 @@
+import requests 
+from bs4 import BeautifulSoup 
+from tabulate import tabulate 
+import os 
+import numpy as np 
+import matplotlib.pyplot as plt
+
+
+#The code displays the live status of COvid-19 cases as per the government's official website
+extract_contents = lambda row: [x.text.replace('\n', '') for x in row] 
+URL = 'https://www.mohfw.gov.in/'
+  
+SHORT_HEADERS = ['SNo', 'State','Confirmed Cases',
+                 'Cured','Death'] 
+  
+response = requests.get(URL).content 
+soup = BeautifulSoup(response, 'html.parser') 
+header = extract_contents(soup.tr.find_all('th')) 
+  
+stats = [] 
+all_rows = soup.find_all('tr') 
+  
+for row in all_rows: 
+    stat = extract_contents(row.find_all('td')) 
+    if stat: 
+        if len(stat) == 5:  
+            stat = ['', *stat] 
+            stats.append(stat) 
+        elif len(stat) == 6: 
+            stats.append(stat) 
+  
+stats[-1][1] = "Total Cases"
+  
+stats.remove(stats[-1])
+
+objects = [] 
+for row in stats : 
+    objects.append(row[2])  
+  
+y_pos = np.arange(len(objects)) 
+  
+performance = [] 
+for row in stats : 
+    performance.append(int(row[3]) + int(row[4])) 
+  
+table = tabulate(stats, headers=SHORT_HEADERS) 
+print(table)
+
+#Graph to show current status of Covid-19 cases
+plt.barh(y_pos, performance, align='center', alpha=0.5, 
+                 color=(234/256.0, 128/256.0, 252/256.0), 
+                 edgecolor=(106/256.0, 27/256.0, 154/256.0)) 
+  
+plt.yticks(y_pos, objects) 
+plt.xlim(1,13000) 
+plt.xlabel('Number of Positive Cases') 
+plt.title('Graphical Representation of Covid Positives') 
+plt.show()
+
+
+#Graph to show status of the pneumonia cases which is still a prolific disease
+state=['delhi','madhya pradesh','uttar pradesh','maharastra','bihar','west bengal']
+cases=['11','331.2','844','152','580','203.7']
+
+plt.bar(state,cases,width=0.3,color=['green','red'])
+plt.ylabel('Cases per thousand people')
+plt.title('Highest Cases of Pneumonia in India')
+plt.show()
